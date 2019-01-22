@@ -1,0 +1,17 @@
+items.find({
+    "repo": { "$eq": "repository-name" },
+    "$or" :[
+        {
+            "$and": [
+                { "stat.downloads": { "$eq":null } },
+                { "updated": { "$before": "ttl-without-dl" } }
+            ]
+        },
+        {
+            "$and": [
+                { "stat.downloads": { "$gt": 0 } },
+                { "stat.downloaded": { "$before": "ttl-with-dl" } }
+            ]
+        }
+    ]
+}).include("repo", "name", "path", "updated", "sha256", "stat.downloads", "stat.downloaded")

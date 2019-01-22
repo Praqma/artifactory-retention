@@ -1,0 +1,6 @@
+items.find({
+    "repo": { "$eq": "foo-logs-local" },
+    "$and": [
+        {"name": {"$nmatch": "*.log"}}
+    ]
+}).include("repo", "name", "path", "updated", "sha256", "stat.downloads", "stat.downloaded")

@@ -1,0 +1,11 @@
+{
+    "templates": {
+        "unused-and-stale": [
+            { "repository-name": "foo-dev-local", "ttl-without-dl": "7d", "ttl-with-dl": "1mo" },
+            { "repository-name": "foo-stable-local", "ttl-without-dl": "1mo", "ttl-with-dl": "3mo" }
+        ],
+        "unused": [
+            { "repository-name": "bar-lib-local", "ttl-without-dl": "3mo" }
+        ]
+    }
+}
