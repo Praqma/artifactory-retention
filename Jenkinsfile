@@ -5,7 +5,7 @@ node() {
   }
 
   stage('expand templates') {
-    docker.image('groovy').inside {
+    docker.image('groovy:2.5-jre8').inside {
       sh "groovy ExpandTemplates.groovy"
     }
   }
@@ -18,7 +18,7 @@ node() {
       String repoName = aql.name.replace('.json', '').replace('template-', '')
       return [
         (repoName.toLowerCase()):{
-          docker.image('groovy').inside {
+          docker.image('groovy:2.5-jre8').inside {
             withCredentials([usernamePassword(
               credentialsId: 'artifactory-user',
               usernameVariable: 'username',
@@ -42,7 +42,7 @@ node() {
 
   // Cleanup builds without artifacts
   stage('clean empty builds') {
-    docker.image('groovy').inside {
+    docker.image('groovy:2.5-jre8').inside {
       withCredentials([usernamePassword(
         credentialsId: 'artifactory-user',
         usernameVariable: 'username',
