@@ -16,7 +16,7 @@ It'll require a few tweaks to get it up and running for yourself, notably:
   * [AQL Query Templates](#aql-query-templates)
   * [Custom AQL Queries](#custom-aql-queries)
 * [Build Retention](#build-retention)
-* [Running The Tetention](#running-the-retention)
+* [Running The Retention](#running-the-retention)
 * [Cleaning Up Binaries](#cleaning-up-binaries)
 
 ## Artifact Retention
