@@ -117,14 +117,14 @@ items.find({
 
 The generated AQL query can then be used by `ArtifactRetention.groovy`.
 
-### Build Retention
+## Build Retention
 
 Build retention works similarly to artifact retention, but it's not as fleshed out.
 There's a single AQL query, `builds-without-artifacts.json`, that matches all builds that produced no artifacts or had all their artifacts removed by the artifact retention.
 
 The `BuildRetention.groovy` script runs that AQL and deletes matching builds using the Artifactory REST API.
 
-### Running The Retention
+## Running The Retention
 
 Running the retention consists of a few steps:
 
@@ -135,7 +135,7 @@ Running the retention consists of a few steps:
 To make things easy, there's a `Jenkinsfile` included that automates this, running retention for all repositories (in parallel and in chunks of 10).
 Just make a Jenkins job that runs the retention as a cron job.
 
-### Cleaning Up Binaries
+## Cleaning Up Binaries
 
 Deleting artifacts through the REST API does just that.
 It deletes the artifacts, references to binaries, but not the binaries themselves.
