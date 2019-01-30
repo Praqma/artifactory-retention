@@ -1,7 +1,7 @@
 # Artifactory retention
 
 This repository shows how you can easily manage artifact and build retention in Artifactory.
-For more information, check out [the blog](https://www.praqma.com/stories/artifactory-retention-policies/) for details.
+For more information, check out [the blog](https://www.praqma.com/stories/artifactory-retention-policies/) (_coming soon_) for details.
 
 It'll require a few tweaks to get it up and running for yourself, notably:
 
