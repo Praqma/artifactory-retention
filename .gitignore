@@ -1,2 +1,5 @@
-result/
-artifact-aql/template-*.json
+/result/
+/aql/artifact/template-*.json
+/.gradle/
+/.settings/
+/.project

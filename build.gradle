@@ -1,0 +1,28 @@
+plugins {
+  id 'cz.alenkacz.gradle.jsonvalidator' version '1.2.1'
+}
+
+import groovy.json.JsonSlurper
+import cz.alenkacz.gradle.jsonvalidator.ValidateJsonTask
+
+task validateAql {
+    group 'Validation'
+    description 'Validates the AQL scripts are valid JSON'
+
+    doLast {
+        JsonSlurper json = new JsonSlurper()
+        fileTree(dir: 'aql', include: '**.aql').each { file ->
+            logger.info file.name
+            String content = (file.text =~ /(\{[\s\S]+\})/)[0][0] // Strip non-JSON from AQL
+            json.parseText(content)
+        }
+    }
+}
+
+task validateSubscriptions (type: ValidateJsonTask) {
+    group 'Validation'
+    description 'Validates the template subscriptions against a schema'
+
+    targetJsonFile = file('config/template-subscription.json')
+    jsonSchema = file('schemas/template-subscription.json')
+}

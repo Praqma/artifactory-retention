@@ -1,0 +1,3 @@
+builds.find(
+    {"module.name":{"$nmatch": "*"}}
+).include("name", "number")

@@ -1,0 +1,56 @@
+{
+  "definitions": {},
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "http://example.com/root.json",
+  "type": "object",
+  "title": "Root",
+  "required": [
+    "templates"
+  ],
+  "properties": {
+    "templates": {
+      "$id": "#/properties/templates",
+      "type": "object",
+      "title": "Retention templates",
+      "required": [
+        "never-used"
+      ],
+      "properties": {
+        "never-used": {
+          "$id": "#/properties/templates/properties/never-used",
+          "type": "array",
+          "title": "Never-used retention",
+          "items": {
+            "$id": "#/properties/templates/properties/never-used/items",
+            "type": "object",
+            "title": "Subscription to never-used retention",
+            "required": [
+              "repository-name",
+              "ttl-without-dl"
+            ],
+            "properties": {
+              "repository-name": {
+                "$id": "#/properties/templates/properties/never-used/items/properties/repository-name",
+                "type": "string",
+                "title": "Repository name",
+                "examples": [
+                  "foo-local"
+                ],
+                "pattern": "^(.*)$"
+              },
+              "ttl-without-dl": {
+                "$id": "#/properties/templates/properties/never-used/items/properties/ttl-without-dl",
+                "type": "string",
+                "title": "Time to live without downloads",
+                "examples": [
+                  "3mo"
+                ],
+                "pattern": "^\\d+(mills|ms|seconds|s|minutes|days|d|weeks|w|months|mo|years|y)$"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

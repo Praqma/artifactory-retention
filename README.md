@@ -1,143 +1,56 @@
+| maintainer |
+| ---------- |
+| praqma-thi |
+
 # Artifactory retention
 
-This repository shows how you can easily manage artifact and build retention in Artifactory.
-For more information, check out [the blog](https://www.praqma.com/stories/artifactory-retention-policies/) (_coming soon_) for details.
+Repository used to manage Artifactory repository retention policies.
 
-It'll require a few tweaks to get it up and running for yourself, notably:
+## Adopting this for own usage
 
-* Changing the retention scripts to point to your Artifactory server (files: `ArtifactRetention.groovy`, `BuildRetention.groovy`)
-* Changing the Jenkinsfile to use credentials that exist on your master (file: `Jenkinsfile`)
-* Editing the AQL queries and templates to match your needs (directories: `artifact-aql`, `templates`)
-* Editing the configured repositories to match your setup (file: `template-subscription.json`)
+* Change the artifactory server URL in `scripts/ArtifactRetention.groovy` and `scripts/BuildRetention.groovy`
+* Set up any desired retention policies using the guide below
+* Run the retention using the guide below
 
-## Table of contents
+## Setting up a retention policy
 
-* [Artifact Retention](#artifact-retention)
-  * [AQL Query Templates](#aql-query-templates)
-  * [Custom AQL Queries](#custom-aql-queries)
-* [Build Retention](#build-retention)
-* [Running The Retention](#running-the-retention)
-* [Cleaning Up Binaries](#cleaning-up-binaries)
+You can either subscribe it to a premade retention policy or create a custom policy.
 
-## Artifact Retention
+### Subscribing your repository to a premade retention policy
 
-Artifacts matching a specific AQL query are deleted using the Artifactory REST API.
-To assign an AQL query to a repository, either:
+Add an entry for your repository in the `config/template-subscription.json` file under the template you wish to subscribe to.
 
-* Subscribe to a template AQL query, or
-* Write a custom AQL query for the repository
+#### Available templates
 
-Both ways are elaborated below.
+##### Unused
 
-### AQL Query Templates
+-`repo-name`: The target repository
+-`ttl-without-dl`: Time to keep artifacts with zero total downloads
 
-AQL query templates are stored in the `templates` directory.
+### Setting up a custom retention policy
 
-Repositories can subscribe to them in the `template-subscription.json` file.
+If none of the premade policies suit you, add a custom AQL file under the `aql/artifact/` directory named `<repository-name>.aql`.
+This should contain an [AQL query](https://www.jfrog.com/confluence/display/RTF/Artifactory+Query+Language) that fetches the items you want to clean up.
 
-The `ExpandTemplates.groovy` script creates an AQL query based on a template for each repository subscribed to the template.
-It replaces value placeholders with the values set in the `template-subscription.json` file and writes the result to the `artifact-aql` directory.
-These are later used for running the actual cleanup.
+## Creating a new retention policy template
 
-#### Template example
+New templates can be defined under the `aql/templates` dir.
+The `expandTemplates.sh` script creates a copy of the template under `aql/artifact/` for each of its subscribers defined in the `config/template-subscription.json` file. Any string in the template that matches a key passed in by a subscriber will be replaced by the subscriber's value.
 
-Below, a repository is subscribed to the `unused` template, configuring the `repository-name` and `ttl-without-dl` values.
+## Setting up build retention
 
-`template-subscription.json`:
+Build retention works identical to artifact retention, except that you add AQL scripts to the `aql/build/` dir. Templates are not supported.
 
-```json
-{
-    "templates": {
-        "unused": [
-            { "repository-name": "bar-lib-local", "ttl-without-dl": "3mo" }
-        ]
-    }
-}
-```
+## Running retention
 
-The `unused` template deletes artifacts that have never been downloaded if they are older than a configurable age.
-Note that the `repository-name` and `ttl-without-dl` values will be replaced when the actual AQL query files are generated.
+To run artifact retention, you can run the `runRetention.sh` script present in the repository:
+`./runRetention.groovy artifacts <repo-name> [user] [password]`
 
-`unused.json`:
+*Note*: If you subscribed to a retention policy, you must run `./expandTemplates.sh` first.
 
-```json
-items.find({
-    "repo": { "$eq": "repository-name" },
-    "$or" : [
-        {
-            "$and": [
-                { "stat.downloads": { "$eq":null } },
-                { "updated": { "$before": "ttl-without-dl" } }
-            ]
-        }
-    ]
-}).include("repo", "name", "path", "updated", "sha256", "stat.downloads", "stat.downloaded")
-```
+To run build retention, you can run the `runRetention.sh` script present in the repository:
+`./runRetention.groovy builds <retention-name> [user] [password]`
 
-Running the `ExpandTemplates.groovy` script will generate the following file using the template and the values in `template-subscription.json`.
+## Automating the retention
 
-`artifact-aql/template-bar-lib-local`:
-
-```json
-items.find({
-    "repo": { "$eq": "bar-lib-local" },
-    "$or" : [
-        {
-            "$and": [
-                { "stat.downloads": { "$eq":null } },
-                { "updated": { "$before": "3mo" } }
-            ]
-        }
-    ]
-}).include("repo", "name", "path", "updated", "sha256", "stat.downloads", "stat.downloaded")
-```
-
-The generated AQL query can then be used by `ArtifactRetention.groovy`.
-
-### Custom AQL Queries
-
-If you have a niche use case where using or making a template doesn't make sense, you can always create a custom AQL query for a specific repository.
-Add the AQL query to the `artifact-aql` directory as `<repository-name>.json`.
-
-#### Custom Query Example
-
-The `foo-logs-local.aql` query deletes all files whose names don't match `*.logs`.
-It's added to the `artifact-aql` directory.
-
-`foo-logs-local.json`:
-
-```json
-items.find({
-    "repo": { "$eq": "foo-logs-local" },
-    "$and": [
-        {"name": {"$nmatch": "*.log"}}
-    ]
-}).include("repo", "name", "path", "updated", "sha256", "stat.downloads", "stat.downloaded")
-```
-
-The generated AQL query can then be used by `ArtifactRetention.groovy`.
-
-## Build Retention
-
-Build retention works similarly to artifact retention, but it's not as fleshed out.
-There's a single AQL query, `builds-without-artifacts.json`, that matches all builds that produced no artifacts or had all their artifacts removed by the artifact retention.
-
-The `BuildRetention.groovy` script runs that AQL and deletes matching builds using the Artifactory REST API.
-
-## Running The Retention
-
-Running the retention consists of a few steps:
-
-* Run `ExpandTemplates.groovy` to generate AQL queries for repositories using template subscriptions
-* Run `ArtifactRetention.groovy` for each AQL query in the `artifact-aql` directory
-* Run `BuildRetention.groovy` to clean up builds that had all their artifacts removed
-
-To make things easy, there's a `Jenkinsfile` included that automates this, running retention for all repositories (in parallel and in chunks of 10).
-Just make a Jenkins job that runs the retention as a cron job.
-
-## Cleaning Up Binaries
-
-Deleting artifacts through the REST API does just that.
-It deletes the artifacts, references to binaries, but not the binaries themselves.
-To delete the binaries and clear up disk space, head over to the **Artifactory Admin Panel -> Advanced -> Maintenance** and hit the **Prune Unreferenced Data** button.
-There doesn't seem to be a REST API call to run this yet, so for now it's a manual task.
+The repository contains two Jenkinsfiles for automating retention runs as well as integrating changes, you'll find them under the `jenkins` directory. You should be able to adopt them with minor changes.
