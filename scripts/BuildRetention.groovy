@@ -74,6 +74,11 @@ buildJson.results.eachWithIndex { build, index ->
       build."build.name".replace('%2F', '/'),
       build."build.name".replace('/', '%2F')
     ].unique()
+
+    // safe encoding of spaces in url
+    buildNames = [
+      build."build.name".replace(' ', '%20')
+    ].unique()
     
     buildNames.each { name ->
       runCommand("$curl -X DELETE ${server}/api/build/${name}?buildNumbers=${build."build.number"}&artifacts=0")
