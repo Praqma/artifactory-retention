@@ -69,17 +69,14 @@ println "Deleting ${buildJson.results.size()} empty builds."
 buildJson.results.eachWithIndex { build, index ->
     println "${index}: ${build."build.name"} (${build."build.number"})"
 
+    def encodedBuildName = java.net.URLEncoder.encode(build."build.name", "UTF-8")
+
     // Due to reasons, url encoding slashes is _sometimes_ required. So just nuke both variants.
-    def buildNames = [ 
-      build."build.name".replace('%2F', '/'),
-      build."build.name".replace('/', '%2F')
+    def buildNames = [
+      encodedBuildName,
+      encodedBuildName.replace('%2F', '/')
     ].unique()
 
-    // safe encoding of spaces in url
-    buildNames = [
-      build."build.name".replace(' ', '%20')
-    ].unique()
-    
     buildNames.each { name ->
       runCommand("$curl -X DELETE ${server}/api/build/${name}?buildNumbers=${build."build.number"}&artifacts=0")
     }
