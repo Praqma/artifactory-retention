@@ -15,7 +15,7 @@ fi
 
 if [ "$1" = "builds" ]
   then
-    groovy scripts/BuildRetention.groovy aql/build/$2.json result/ $3 "$4"
+    groovy scripts/BuildRetention.groovy aql/build/$2.aql result/ $3 "$4"
 fi
 
 if [ "$1" = "artifacts" ]

@@ -65,14 +65,19 @@ File rawJsonFile = new File(outputDir, "${retentionName}.json")
 runCommand("$curl -H content-type:text/plain --data-binary @${aqlScript} ${server}/api/search/aql -o ${rawJsonFile}")
 def buildJson = json.parse(rawJsonFile)
 
-println "Deleting ${builds.results.size()} empty builds."
-builds.results.eachWithIndex { build, index ->
+println "Deleting ${buildJson.results.size()} empty builds."
+buildJson.results.eachWithIndex { build, index ->
     println "${index}: ${build."build.name"} (${build."build.number"})"
 
     // Due to reasons, url encoding slashes is _sometimes_ required. So just nuke both variants.
     def buildNames = [ 
       build."build.name".replace('%2F', '/'),
       build."build.name".replace('/', '%2F')
+    ].unique()
+
+    // safe encoding of spaces in url
+    buildNames = [
+      build."build.name".replace(' ', '%20')
     ].unique()
     
     buildNames.each { name ->
