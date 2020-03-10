@@ -1,0 +1,3 @@
+releases.find(
+    {"created": { "$before": "7d"}}
+).include("name","version")
