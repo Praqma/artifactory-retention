@@ -1,6 +1,6 @@
 | maintainer |
 | ---------- |
-|  evgenyka  |
+| praqma-thi |
 
 # Artifactory retention
 
