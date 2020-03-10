@@ -1,14 +1,15 @@
 | maintainer |
 | ---------- |
-| praqma-thi |
+|  evgenyka  |
 
 # Artifactory retention
 
-Repository used to manage Artifactory repository retention policies.
+Repository used to manage Artifactory retention policies for artifacts, builds and releases.
+NOTE: the Release Bundles will be removed only from JFrog Distribution, not from the Artifactory Edge Nodes.
 
 ## Adopting this for own usage
 
-* Change the artifactory server URL in `scripts/ArtifactRetention.groovy` and `scripts/BuildRetention.groovy`
+* Change the artifactory server URL in `scripts/*.groovy`
 * Set up any desired retention policies using the guide below
 * Run the retention using the guide below
 
@@ -37,9 +38,9 @@ This should contain an [AQL query](https://www.jfrog.com/confluence/display/RTF/
 New templates can be defined under the `aql/templates` dir.
 The `expandTemplates.sh` script creates a copy of the template under `aql/artifact/` for each of its subscribers defined in the `config/template-subscription.json` file. Any string in the template that matches a key passed in by a subscriber will be replaced by the subscriber's value.
 
-## Setting up build retention
+## Setting up build and release retention
 
-Build retention works identical to artifact retention, except that you add AQL scripts to the `aql/build/` dir. Templates are not supported.
+Build and release retention works identical to artifact retention, except that you add AQL scripts to the `aql/build/` and `aql/release/` dir respectively. Templates are not supported.
 
 ## Running retention
 
@@ -50,6 +51,10 @@ To run artifact retention, you can run the `runRetention.sh` script present in t
 
 To run build retention, you can run the `runRetention.sh` script present in the repository:
 `./runRetention.groovy builds <retention-name> [user] [password]`
+
+To run release retention, you can run the `runRetention.sh` script present in the repository:
+`./runRetention.groovy builds <retention-name> [user] [password]`
+
 
 ## Automating the retention
 
