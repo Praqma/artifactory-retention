@@ -7,9 +7,9 @@ if [ $# -lt 2 ]
     exit 1
 fi
 
-if [ "$1" != "builds" ] && [ "$1" != "artifacts" ]
+if [ "$1" != "builds" ] && [ "$1" != "artifacts" ] && [ "$1" != "releases" ]
   then
-    echo "first arg must be 'builds' or 'artifacts' (got '$1')"
+    echo "first arg must be 'builds' or 'artifacts' or 'releases' (got '$1')"
     exit 1
 fi
 
@@ -21,4 +21,9 @@ fi
 if [ "$1" = "artifacts" ]
   then
     groovy scripts/ArtifactRetention.groovy $2 aql/artifact result/ $3 "$4"
+fi
+
+if [ "$1" = "releases" ]
+  then
+    groovy scripts/ReleaseRetention.groovy aql/release/$2.aql result/ $3 "$4"
 fi
