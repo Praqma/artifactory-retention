@@ -78,7 +78,7 @@ releaseJson.results.eachWithIndex { release, index ->
     ].unique()
 
     releaseNames.each { name ->
-       // runCommand("$curl -X DELETE ${server}/distribution/api/v1/release_bundle/${name}/${release."release.version"}")
+        runCommand("$curl -X DELETE ${server}/distribution/api/v1/release_bundle/${name}/${release."release.version"}")
     }
 }
 
