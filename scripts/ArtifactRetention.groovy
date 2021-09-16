@@ -1,40 +1,45 @@
 #! /bin/env groovy
-import groovy.json.JsonSlurper
 
 // ------------
 // PROPERTIES
 // ------------
 
-String server = 'http://artifactory.praqma.net'
+String server = 'http://localhost:8081/artifactory'
 
 // ------------
 // ARGUMENTS
 // ------------
 
-if (!args || args.size() < 2) {
-  println "Usage:\n./${this.class.name}.groovy <repo-name> <aql-dir> <output-dir> [username] [password]"
+if (!args || args.size() < 3) {
+  println "Usage:\n./${this.class.name}.groovy <repo-name> <spec-dir> <output-dir> [username] [password]"
   System.exit(1)
 }
 
 args = args.toList() // allows for safe index access
 String argRepo = args[0].trim()
-String argAqlDir = args[1].trim()
+String argSpecDir = args[1].trim()
 String argOutputDir = args[2].trim()
 String argUser = args[3] ? args[3].trim() : ''
 String argPass = args[4] ? args[4].trim() : ''
 
 File userDir = new File(System.getProperty('user.dir'))
-File aqlDir = new File(userDir, argAqlDir)
+File specDir = new File(userDir, argSpecDir)
 File outputDir = new File(userDir, argOutputDir)
 
 // ------------
 // METHODS
 // ------------
 
-int runCommand (cmd) {
-  println cmd
-  int exit = new ProcessBuilder(cmd.split(' ')).inheritIO().start().waitFor()
-  println "[artifact-retention] exit: ${exit}"
+int runIt (cmd, outputFile = null) {
+  ProcessBuilder process = new ProcessBuilder(cmd.split(" "))
+  if (outputFile) {
+    process.redirectErrorStream(true)
+    process.redirectOutput(java.lang.ProcessBuilder.Redirect.to(outputFile))
+  } else {
+    process.inheritIO()
+  }
+
+  int exit = process.start().waitFor()
   assert exit == 0
   return exit
 }
@@ -43,34 +48,34 @@ int runCommand (cmd) {
 // SCRIPT
 // ------------
 
-JsonSlurper json = new JsonSlurper()
-String curl = argUser && argPass ? "curl -u ${argUser}:${argPass} --noproxy '*'" : 'curl -n'
+String jfrogOptions = (argUser && argPass) ? "--url=${server} --user=${argUser} --password=${argPass}" : "--url=${server}"
 
-// Get retention AQL query
-File aqlFile = new File(aqlDir, "${argRepo}.aql")
-if (!aqlFile.exists()) {
-  // See if it was expanded from a template
-  aqlFile = new File(aqlDir, "template-${argRepo}.aql")
-  if (!aqlFile.exists()) {
-    println "[artifact-retention] ERROR: Could not find a retention policy for ${argRepo}"
-    println "[artifact-retention] ERROR: Make sure one is present in ${aqlDir}"
-    println "[artifact-retention] ERROR: If ${argRepo} is subscribed to a template policy,"
-    println '[artifact-retention] ERROR: run ExpandTemplates.groovy first.'
+println "[artifact-retention] INFO: Finding matching filespec"
+File fileSpec = new File(specDir, "${argRepo}.json")
+if (!fileSpec.exists()) {
+  fileSpec = new File(specDir, "template-${argRepo}.json") // See if it was expanded from a template
+  if (!fileSpec.exists()) {
+    println "[artifact-retention] ERROR: Could not find a retention policy for repository '${argRepo}'"
+    println "[artifact-retention] ERROR: Make sure one is present in ${specDir}"
+    println "[artifact-retention] ERROR: If it is subscribed to a template policy,"
+    println '[artifact-retention] ERROR: run expandTemplates.sh first.'
     System.exit(1)
   }
 }
+println "[artifact-retention] INFO: Using ${fileSpec}"
 
-
-// Fetch and parse artifacts from Artifactory
 outputDir.mkdirs()
 File rawJsonFile = new File(outputDir, "raw-${argRepo}.json")
-runCommand("$curl -H content-type:text/plain --data-binary @${aqlFile} ${server}/api/search/aql -o ${rawJsonFile}")
-def artifacts = json.parse(rawJsonFile)
 
-// Delete matching artifacts
-println "[artifact-retention] Deleting ${artifacts.results.size()} artifacts."
-artifacts.results.eachWithIndex { artifact, index ->
-  String path = "${artifact.repo}/${artifact.path}/${artifact.name}"
-  println "${index}: ${path}"
-  runCommand("$curl -XDELETE ${server}/${path}")
-}
+println "[artifact-retention] INFO: Storing file spec results in ${rawJsonFile}"
+String searchCmd = "jfrog rt search ${jfrogOptions} --spec=${fileSpec}"
+println "[artifact-retention] INFO: ${searchCmd.replace(argPass, '*****')}"
+String searchResult = runIt(searchCmd, rawJsonFile)
+println "[artifact-retention] INFO: exit code ${searchResult}"
+
+String deleteCmd = "jfrog rt delete ${jfrogOptions} --spec=${fileSpec}"
+println "[artifact-retention] INFO: ${deleteCmd.replace(argPass, '*****')}"
+String deleteResult = runIt(deleteCmd, rawJsonFile)
+println "[artifact-retention] INFO: exit code ${deleteResult}"
+
+println "[artifact-retention] INFO: Done!"

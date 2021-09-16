@@ -1,6 +1,0 @@
-items.find({
-    "repo": { "$eq":"bar-dev-local" },
-    "$and": [
-        {"name": {"$match": "*.log"}}
-    ]
-}).include("repo", "name","path", "updated", "sha256", "stat.downloads", "stat.downloaded")

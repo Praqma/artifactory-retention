@@ -1,0 +1,76 @@
+pipeline {
+  options {
+    buildDiscarder(logRotator(numToKeepStr: '10'))
+  }
+
+  triggers {
+    cron('@daily')
+  }
+
+  agent {
+    dockerfile {
+        dir '.docker'
+    }
+  }
+
+  stages {
+    stage ('expand templates') {
+      steps {
+        sh './expandTemplates.sh'
+      }
+    }
+
+    stage ('artifact retention') {
+      environment {
+        RTF_CREDS = credentials('my-artifactory-credentials')
+        CI = true
+      }
+
+      steps {
+        script {
+          // Create a stage for each repository
+          def retentionStages = findFiles(glob: 'retention-specs/artifact/*.json')
+            .collectEntries({ fileSpec ->
+              def repositoryName = fileSpec.name - '.json' - 'template-'
+              return [(repositoryName) : {
+                sh './runRetention.sh artifacts ' + repositoryName + ' $RTF_CREDS_USR "$RTF_CREDS_PSW"'
+              }]
+          })
+
+          // Execute stages in chunks
+          def stageChunks = retentionStages.keySet().collate(10).collect { retentionStages.subMap(it) }
+          stageChunks.eachWithIndex { chunk, i ->
+            stage("clean repositories (${i + 1}/${stageChunks.size()})") {
+              parallel chunk
+            }
+          }
+        }
+      }
+    }
+
+    stage ('build retention') {
+      environment {
+        RTF_CREDS = credentials('my-artifactory-credentials')
+        CI = true
+      }
+
+      steps {
+        sh './runRetention.sh builds builds-without-artifacts $RTF_CREDS_USR "$RTF_CREDS_PSW"'
+      }
+    }
+  }
+
+  post {
+    always {
+      archiveArtifacts artifacts: 'result/*'
+    }
+
+    failure {
+      mail(
+        body: "Artifactory retention is failing, see run details over at ${env.JOB_URL}",
+        subject: 'Artifactory retention is failing',
+        to: 'rtf-support@place.hldr'
+      )
+    }
+  }
+}

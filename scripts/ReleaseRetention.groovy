@@ -5,7 +5,7 @@ import groovy.json.JsonSlurper
 // PROPERTIES
 // ------------
 
-String server = 'http://10.70.10.200:8082'
+String server = 'http://localhost:8081/artifactory'
 
 // ------------
 // ARGUMENTS

@@ -1,5 +1,7 @@
 /result/
-/aql/artifact/template-*.json
+/retention-specs/artifact/template-*.aql
+/retention-specs/artifact/template-*.json
 /.gradle/
 /.settings/
 /.project
+/.gradle/
