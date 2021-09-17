@@ -1,8 +1,0 @@
-{
-    "templates": {
-        "never-used": [
-            { "repository-name": "foo-dev-local", "ttl-without-dl": "3mo" },
-            { "repository-name": "foo-test-local", "ttl-without-dl": "1y" }
-        ]
-    }
-}

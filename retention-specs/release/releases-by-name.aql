@@ -1,3 +1,0 @@
-releases.find(
-    {"version": {"$match": "*56"}}
-).include("name","version")

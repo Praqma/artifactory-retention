@@ -1,26 +1,10 @@
-FROM golang:1.17.0-alpine3.14 AS build
+FROM alpine:3.14.2
 
-ARG JFROG_CLI_VERSION="1.39.0"
+ARG JFROG_CLI_VERSION="2.3.0"
 
-RUN apk add --no-cache --update --quiet \
-      ca-certificates \
-      git
+RUN apk add --no-cache curl
 
-RUN mkdir -p /go/src/github.com/jfrog && \
-    cd /go/src/github.com/jfrog && \
-    git clone https://github.com/jfrog/jfrog-cli && \
-    cd /go/src/github.com/jfrog/jfrog-cli && \
-    git checkout v${JFROG_CLI_VERSION} && \
-    sh build/build.sh jfrog-cli
+RUN curl -Lo /usr/bin/jfrog https://releases.jfrog.io/artifactory/jfrog-cli/v2/${JFROG_CLI_VERSION}/jfrog-cli-linux-amd64/jfrog && \
+    chmod +x /usr/bin/jfrog
 
-# Base on alpine once (if) we get rid of the Groovy scripts
-FROM groovy:3.0.9-jdk8
-
-USER root
-
-COPY --from=build /go/src/github.com/jfrog/jfrog-cli/jfrog-cli \
-                  /usr/bin/jfrog-cli
-
-RUN ln -s /usr/bin/jfrog-cli /usr/bin/jfrog
-
-CMD [ "jfrog-cli", "--version" ]
+ CMD [ "jfrog", "--version" ]

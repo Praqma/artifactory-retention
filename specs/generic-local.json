@@ -5,8 +5,8 @@
                 "items.find": {
                     "repo": "generic-local",
                     "$and": [
-                        { "name": { "$match": "*.log" } },
-                        { "updated": { "$before": "30d" } }
+                        { "name": { "$match": "*.mp3" } },
+                        { "stat.downloads": { "$eq": 1 } }
                     ]
                 }
             }
